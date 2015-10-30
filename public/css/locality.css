@@ -1,0 +1,126 @@
+.background{
+	background:url('../images/homeBg.jpg');
+	min-height:680px;
+	height:auto;
+	position: relative;
+	background-size:cover;
+}
+.ontopData{
+	position: absolute;
+	height:100%;
+	width:100%;
+	top:0;
+	    /*background: #2E2929;*/
+	    background: #000;
+    opacity: .7;
+}
+.topContent{
+	height:220px;
+	width:100%;
+}
+.contentWrapper{
+	min-height:300px;
+	height: auto;
+	overflow:hidden;
+	padding:30px 0px;
+	border-radius: 5px;
+}
+.map{
+	height:350px;
+}
+.search{
+	height:350px;
+}
+
+.logo{
+	margin:20px 0px;
+}
+.logo h1{
+	text-align: center;
+    font-size: 36px;
+    color: #fff;
+    text-shadow: 2px 1px 3px rgba(0,0,0,.7);
+    margin-top:30px;
+}
+.wrapSearch{
+	padding:20px 0px;
+	border:1px solid #cdcdcd;
+	border-radius: 10px;
+	/*box-shadow: inset 0 2px 0 rgba(255,255,255,.3), 0 2px 4px rgba(0,0,0,.4);*/
+}
+.search h2{
+	margin-top:0px;
+}
+.search h2, .search h5{
+	color:#fff;
+}
+
+.forsalerent{
+	padding-top:40px;
+	
+
+}
+.forsalerent .btn{
+	margin-bottom: 5px;
+width: 100%;
+
+}
+.filter{
+	border-left: 1px solid #fff;
+}
+.filter ul {
+	margin-top:15px;
+	padding-left:0px;
+}
+.filter ul li{
+		display: inline;
+		list-style: none;
+		border:1px solid #cdcdcd;
+		border-radius: 3px;
+		padding:10px;
+		margin-left: 3px;
+		color:#fff;
+		cursor: pointer;
+}
+.filter .inputText{
+	height:45px;
+	width: 100%;
+	border:1px solid #cdcdcd;
+	border-radius: 3px;
+	margin: 10px 0px 0px 00px;
+	outline: none;
+}
+.priceArea{
+	margin-top:10px;
+}
+.priceArea input{
+	height: 45px;
+	border-radius: 3px;
+	border:none;
+	outline: none;
+	margin-right: 3px;
+	width:123%;
+
+}
+.searchBtn{
+	width: 93%;
+	margin-top:10px;
+	height:50px;
+	background:#F68121;
+	outline: none !important;
+}
+.searchBtn:hover{
+	background:#F68121 !important;
+}
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,5 +1,5 @@
 .background{
-	background:url('../images/homeBg.jpg');
+	background:url('../images/Home1.jpg');
 	min-height:680px;
 	height:auto;
 	position: relative;
@@ -10,9 +10,6 @@
 	height:100%;
 	width:100%;
 	top:0;
-	    /*background: #2E2929;*/
-	    background: #000;
-    opacity: .7;
 }
 .topContent{
 	height:220px;
@@ -116,7 +113,7 @@ width: 100%;
 #googleMap{
 	width:100%;height:100%;border-radius: 10px;
 	opacity: 1 !important;
-	
+
 }
 
 

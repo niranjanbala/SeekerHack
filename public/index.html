@@ -9,7 +9,7 @@
 	<link href="css/locality.css" rel="stylesheet">
 	<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?v=3.13&libraries=places,geometry,visualization&sensor=true&language=en"></script>
 	<script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
-	
+	<script src="/js/turf.min.js"></script>
 	<link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.0/css/select2.min.css" rel="stylesheet" />
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.0/js/select2.min.js"></script>
 	<script type="text/javascript" src="https://www.parsecdn.com/js/parse-1.2.13.min.js"></script>
@@ -18,11 +18,71 @@
 		var localities;
 		var map;
 		var infowindow = new google.maps.InfoWindow({});
+		var zoneLocality=[[],[],[],[],[]];
+		var mappedLocalities=[];
+		var zonePolygons=[];
 		function initializeMap(){
 			for (var i = 0; i < zones.length; i++) {
-         loadZone(zones[i]);                          
-      }  
-			//console.log(localities);			
+        loadZone(zones[i],i);
+        var polygonEncoded=zones[i].get('polygonEncoded');
+      	var zoneDecodedPath = google.maps.geometry.encoding.decodePath(polygonEncoded);
+        var zonePolygon = {
+				  "type": "Feature",
+				  "geometry": {
+				    "type": "Polygon",
+				    "coordinates": [[
+				    ]]
+				  }
+				};
+				zoneDecodedPath.forEach(function(location) {
+      		zonePolygon.geometry.coordinates[0].push([location.lng(), location.lat()]);	
+      	});
+				var count=0;
+	      for (var j = 0; j < localities.length; j++) {
+	      	var localityData=localities[j];
+	      	var name=localityData.get("localityName");
+	      	var polygonEncoded=localityData.get('polygon_encoded');
+	      	var decodedPath = google.maps.geometry.encoding.decodePath(polygonEncoded);
+	      	var localityPolygon = {
+					  "type": "Feature",
+					  "geometry": {
+					    "type": "Polygon",
+					    "coordinates": [[
+					    ]]
+					  }
+					};
+	      	decodedPath.forEach(function(location) {
+	      		localityPolygon.geometry.coordinates[0].push([location.lng(), location.lat()]);	
+	      	});
+	      	localityPolygon.geometry.coordinates[0].push(localityPolygon.geometry.coordinates[0][0]);	
+	      	var tolerance = 0.0001;
+					var zonePolygonSimplified = turf.simplify(zonePolygon, tolerance, false);
+					var localityPolygonSimplified = turf.simplify(localityPolygon, tolerance, false);
+	      	try {
+		      	var intersection = turf.intersect(zonePolygonSimplified, localityPolygonSimplified);		      	
+		      	if(intersection){
+		      		mappedLocalities.push(name);
+		      		zoneLocality[i].push(localityData);
+		      	}
+	      	} catch(e){	      		
+	      	}	      	
+	      }
+      }
+      var west=[];
+      for (var j = 0; j < localities.length; j++) {
+      	var localityData=localities[j];
+      	var name=localityData.get("localityName");
+      	var found=false;
+      	for(var k=0;k<mappedLocalities.length;k++){
+      		if(name===mappedLocalities[k]){
+      			found=true;
+      		}
+      	}
+      	if(!found){
+      		west.push(localityData);	
+      	}
+      }
+      zoneLocality[3]=west;      
 		}
 		function decodeLevels(encodedLevelsString) {
 	    var decodedLevels = [];
@@ -32,10 +92,31 @@
 	    }
 	    return decodedLevels;
 		}
-		function loadZone(zoneData) {                
+		function loadLocalities(index){
+			zoneLocality[index].forEach(function(locality){				
+				var polygonEncoded=locality.get('polygon_encoded');
+	      var decodedPath = google.maps.geometry.encoding.decodePath(polygonEncoded);
+	    	var decodedLevels = decodeLevels("BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB");
+	    	var polygon=new google.maps.Polygon({
+	        paths: decodedPath,
+					map: map,	   
+	        strokeColor: 'orange',
+	        strokeOpacity: 0.8,
+	        strokeWeight: 1.5,
+	        fillColor: 'yellow',
+	        fillOpacity: 0.4
+		    });
+		    google.maps.event.addListener(polygon, 'mouseover', function (event) {
+		    	polygon.setOptions({fillColor: "orange"});        	
+      	});
+      	google.maps.event.addListener(polygon, 'mouseout', function (event) {
+		    	polygon.setOptions({fillColor: "yellow"});        	
+      	});
+			})
+		}
+		function loadZone(zoneData, index) {
       var zoneName=zoneData.get("zoneName");
       var polygonEncoded=zoneData.get('polygonEncoded');
-      console.log(polygonEncoded);
       var decodedPath = google.maps.geometry.encoding.decodePath(polygonEncoded);
     	var decodedLevels = decodeLevels("BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB");
     	var zonePolygon = new google.maps.Polygon({
@@ -45,35 +126,21 @@
         strokeWeight: 2,
         fillColor: '#CCC',
         fillOpacity: 0.4
-        //levels: decodedLevels,
-        //strokeColor: "#FF0000",
-        //strokeOpacity: 1.0,
-        //strokeWeight: 2
 	    });
+	    zonePolygons.push(zonePolygon);
 	    google.maps.event.addListener(zonePolygon, 'mouseover', function (event) {
         infowindow.setContent("<a href='"+"' target='_blank'><b>"+zoneName+"</b></a>");
         infowindow.setPosition(event.latLng);
         infowindow.open(map);
       });
+      google.maps.event.addListener(zonePolygon, 'click', function (event) {
+      	zonePolygons.forEach(function(polygon){
+      		polygon.setMap(null);
+      	})
+      	map.setZoom(11);
+      	loadLocalities(index);
+      });
 	    zonePolygon.setMap(map);
-      /*allPolygons.forEach(function(item, index){
-          var bermudaTriangle = new google.maps.Polygon({
-              map: map,
-              paths: item.point,
-              strokeColor: '#FF0000',
-              strokeOpacity: 0.8,
-              strokeWeight: 2,
-              fillColor: '#CCC',
-              fillOpacity: 0.4
-          });
-          map.panTo(new google.maps.LatLng(item.point[0].lat,item.point[0].lng));
-          var url="https://www.google.co.in/maps/place/"+localityName+","+$("#city").val();
-          google.maps.event.addListener(bermudaTriangle, 'mouseover', function (event) {
-              infowindow.setContent("<a href='"+url+"' target='_blank'><b>"+localityName+"</b></a>");
-              infowindow.setPosition(event.latLng);
-              infowindow.open(map);
-          });
-      });*/
     }
 		function initialize() {
 		  var mapProp = {

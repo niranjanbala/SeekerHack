@@ -7,18 +7,19 @@
 	<link rel="shortcut icon" href="images/cf.ico">
 	<link href="css/bootstrap/bootstrap.css" rel="stylesheet">
 	<link href="css/locality.css" rel="stylesheet">
-
-	
-
-
-	<script type="text/javascript">
-
+	<script src="http://maps.googleapis.com/maps/api/js"></script>
+	<script>
+		function initialize() {
+		  var mapProp = {
+		    center:new google.maps.LatLng(51.508742,-0.120850),
+		    zoom:5,
+		    mapTypeId:google.maps.MapTypeId.ROADMAP
+		  };
+		  var map=new google.maps.Map(document.getElementById("googleMap"),mapProp);
+		}
+		google.maps.event.addDomListener(window, 'load', initialize);
 	</script>	
-
-
-	</head>
-
-
+</head>
 <body>
 	<div class="container-fluid">
 		<div class="row background">
@@ -35,6 +36,7 @@
 				</div>
 				<div class="col-md-12 contentWrapper">
 					<div class="col-md-5 map">
+						<div  id="googleMap"></div>
 					</div>
 					<div class="col-md-7 search">
 						<h2>Find your dream property in Bangalore</h2>
@@ -71,9 +73,6 @@
 								<center>
 									<button class="searchBtn btn">Search</button>
 								</center>
-								
-
-								
 							</div>
 						</div>
 					</div>	
@@ -85,5 +84,6 @@
 	<script src="/js/lib/jquery.js" ></script>
 	<script src="/js/lib/bootstrap.js" ></script>
 	<script src="/js/home.js" ></script>
+	
 </body>
 </html>

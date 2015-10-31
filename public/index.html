@@ -191,11 +191,16 @@
 		    google.maps.event.addListener(polygon, 'mouseover', function (event) {
 		    	polygon.setOptions({fillColor: "orange"});
 		    	var localityName=locality.get("localityName");
-		    	var data=locality.get("attributes");
-		    	if(data.length>0){
-		    		console.log(data);
+		    	var attributes=locality.get("attributes");	
+		    	var html=""
+		    	if(attributes&& attributes.length>0){
+		    		html="<div>"
+		    		attributes.forEach(function(attr){
+		    			html+=("<b>"+attr.category_name+"</b>-"+Math.ceil(attr.category_rating)+"/10 <br>");
+		    		})
+		    		html+="</div>";
 		    	}
-		    	infowindow.setContent("<div><a href='"+"' target='_blank'><b>"+localityName+"</b></a></div>");   	
+		    	infowindow.setContent("<div><a href='"+"' target='_blank'><b>"+localityName+"</b></a>"+html+"</div>");   	
         	infowindow.setPosition(event.latLng);
         	infowindow.open(map);
       	});

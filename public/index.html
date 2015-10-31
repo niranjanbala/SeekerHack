@@ -11,6 +11,7 @@
 	<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?v=3.13&libraries=places,geometry,visualization&sensor=true&language=en"></script>
 	<script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
 	<script src="/js/turf.min.js"></script>
+	<script src="/js/utf.grid.js"></script>
 	<link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.0/css/select2.min.css" rel="stylesheet" />
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.0/js/select2.min.js"></script>
 	<script type="text/javascript" src="https://www.parsecdn.com/js/parse-1.2.13.min.js"></script>
@@ -22,9 +23,68 @@
 		var zoneLocality=[[],[],[],[],[]];
 		var mappedLocalities=[];
 		var zonePolygons=[];
-		jQuery(document).ready(function(){
-			console.log('here');
-		})
+		function setupInteraction(utfGrid){
+
+      utfGrid.on('mouseover', function (o) {
+        if (o.data && o.data.utfData) {
+          var data=JSON.parse((o.data.utfData))
+          var html=null;
+          if(data[0].listing_id) {
+            var bhk=data[0].bhk;
+            var listing_id=data[0].listing_id;
+            var price=data[0].price;
+            listingHover(listing_id);
+            var link="https://www.commonfloor.com/listing/"+bhk+"bhk-house-for-"+$(".search-intent").val()+"-in-"+cityList[selectedCityIndex].cfCityName+"/"+listing_id+"?"+currentParams;
+            html="<b><a href='"+link+"' target='_blank' onclick='toCfListing(this)' data-target-id='"+ listing_id+"'>"+bhk+"BHK - "+price+"</a></b>";
+          } else if(data[0].project_id) {
+            var name=decodeURI(data[0].name);
+            var project_id=data[0].project_id;
+            var listings_count=data[0].listings_count;
+            povpHover(project_id);
+            var link="https://www.commonfloor.com/"+name.split(" ").join("-")+"-"+cityList[selectedCityIndex].cfCityName+"/povp-"+project_id+"?"+currentParams;
+            html="<b><a href='"+link+"' target='_blank' onclick='toCfPovp(this)' data-target-id='"+ project_id+"'>"+listings_count+" listings in "+name+"</a></b>";
+          }
+          if(html){
+              infowindow.setContent(html)
+              infowindow.setPosition(o.latLng);
+              infowindow.open(map);
+          }
+        }
+      }, utfGrid);
+
+      utfGrid.on('mouseout', function (o) {
+        infowindow.close();
+      }, utfGrid);
+}
+		function setTiles(params){
+			var timeStamp=new Date().getTime();
+	    var requestParam={
+	        "search_intent": 'Sale',
+	        "page": 1,
+	        "city": 'Bangalore',
+	        "prop_name": [params.localityName],
+	        "property_location_filter":["area_"+params.localityId],
+	        "time_stamp": timeStamp,
+	        "request_id": timeStamp,
+	        "fetch_max": 1,
+	        "number_of_children": "2",
+	        "srtby": "bestquality"
+	    };
+	    console.log(requestParam);
+	    var imageMapType = new google.maps.ImageMapType({
+	        getTileUrl: function(coord, zoom) {         
+	          return ['/tiles/',
+	              zoom, '/', coord.x, '/', coord.y, '.png'].join('')+'?qs='+JSON.stringify(requestParam);
+	        },
+	        tileSize: new google.maps.Size(256, 256)
+	    });
+	    var utfGrid = new UtfGrid();
+	    utfGrid.setGridURL('/tiles/{z}/{x}/{y}.json', JSON.stringify(requestParam));
+	    utfGrid.setMap(map);
+	    setupInteraction(utfGrid);
+	    //map.overlayMapTypes.clear();
+	    map.overlayMapTypes.setAt(1,imageMapType);
+		}
 		function initializeMap(){
 			for (var i = 0; i < zones.length; i++) {
         loadZone(zones[i],i);
@@ -120,12 +180,22 @@
 		    	map.setZoom(13);
 		    	selectedLocality.localityId=locality.get('localityId')
 		    	selectedLocality.localityName=locality.get('localityName')
+		    	console.log(selectedLocality);
 		    	prepareBreadCrumb();
+		    	setTiles({
+						'localityName':selectedLocality.localityName,
+						'localityId':selectedLocality.localityId
+		    	})
 		    	map.panTo(event.latLng);
 		    });
 		    google.maps.event.addListener(polygon, 'mouseover', function (event) {
-		    	polygon.setOptions({fillColor: "orange"});        	
-		    	infowindow.setContent("<a href='"+"' target='_blank'><b>"+locality.get("localityName")+"</b></a>");
+		    	polygon.setOptions({fillColor: "orange"});
+		    	var localityName=locality.get("localityName");
+		    	var data=locality.get("attributes");
+		    	if(data.length>0){
+		    		console.log(data);
+		    	}
+		    	infowindow.setContent("<div><a href='"+"' target='_blank'><b>"+localityName+"</b></a></div>");   	
         	infowindow.setPosition(event.latLng);
         	infowindow.open(map);
       	});
@@ -197,6 +267,7 @@
     }
     function prepareBreadCrumb(){    				
     	var html="<a href='/''>Home</a>";
+    	console.log(selectedZone);
     	if(selectedZone.index){
     		html+="&nbsp;>>&nbsp;<a class='zoneActivator' onClick='zoneClick(this)' data-zone-index='"+selectedZone.index+"'>"+selectedZone.zoneName+"</a>"
     	}

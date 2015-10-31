@@ -1,0 +1,15 @@
+{
+  "production": {
+    "serp": {
+      "solrRoute": {
+        "host": "www.commonfloor.com",
+        "method": "POST",
+        "path": "/nitro/search/search-results"
+      },
+      "style": {
+        "file": "listingStyles.xml"
+      },
+      "tileSize": 256
+    }
+  }
+}

@@ -23,6 +23,16 @@ if (cluster.isMaster) {
     app.use(bodyParser.urlencoded({ extended: true }));
     app.use(compression({filter: shouldCompress}))
     app.set('port', process.env.PORT || 3000);
+    var tilesHandler = require('./tiles/tilesHandler.js');
+		app.route('/tiles/:z/:x/:y.json').get(function(req, res, next) {
+			tilesHandler.renderUtf(req, res);
+		});
+		app.route('/tiles/:z/:x/:y.png').get(function(req, res, next) {
+			tilesHandler.renderPng(req, res);
+		});
+		app.route('/vt_tiles/:z/:x/:y.png').get(function(req, res, next) {
+			tilesHandler.renderVt(req, res);
+		});
     function shouldCompress(req, res) {
     	if (req.headers['x-no-compression']) {
     		return false

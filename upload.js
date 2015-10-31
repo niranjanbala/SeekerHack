@@ -10,7 +10,7 @@ function toTitleCase(str)
 {
     return str.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
 }
-array.forEach(function  (item) {
+/*array.forEach(function  (item) {
 	var data=item.split(',');
 	var projectName=data[0];
 	var projectId=data[1];
@@ -34,5 +34,6 @@ Object.keys(object).forEach(function(keys){
 	if(object[keys].gaStats.length==3){
 		arrayData.push(object[keys]);
 	}
-})
-console.log(JSON.stringify({"results": arrayData}));
+})*/
+//console.log(JSON.stringify({"results": arrayData}));
+

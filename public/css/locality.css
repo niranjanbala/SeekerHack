@@ -134,7 +134,12 @@ width: 100%;
 	border:1px solid #000;color:#000 !important;
 	padding:6px !important;
 }
-
+.positiveSentiment{
+	color:green;
+}
+.negativeSentiment{
+	color:red;
+}
 
 
 

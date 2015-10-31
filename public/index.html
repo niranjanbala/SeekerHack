@@ -6,7 +6,8 @@
 	<meta name="viewport" content="height=device-height, width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=0" />
 	<link rel="shortcut icon" href="images/cf.ico">
 	<link href="css/bootstrap/bootstrap.css" rel="stylesheet">
-	<link href="css/locality.css" rel="stylesheet">
+	<link href="css/locality.css" rel="stylesheet">	
+
 	<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?v=3.13&libraries=places,geometry,visualization&sensor=true&language=en"></script>
 	<script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
 	<script src="/js/turf.min.js"></script>
@@ -21,6 +22,9 @@
 		var zoneLocality=[[],[],[],[],[]];
 		var mappedLocalities=[];
 		var zonePolygons=[];
+		jQuery(document).ready(function(){
+			console.log('here');
+		})
 		function initializeMap(){
 			for (var i = 0; i < zones.length; i++) {
         loadZone(zones[i],i);
@@ -34,6 +38,7 @@
 				    ]]
 				  }
 				};
+
 				zoneDecodedPath.forEach(function(location) {
       		zonePolygon.geometry.coordinates[0].push([location.lng(), location.lat()]);	
       	});
@@ -93,6 +98,9 @@
 	    return decodedLevels;
 		}
 		function loadLocalities(index){
+			currentShowingPolygon.forEach(function(polygon){
+      		polygon.setMap(null);
+      })
 			zoneLocality[index].forEach(function(locality){				
 				var polygonEncoded=locality.get('polygon_encoded');
 	      var decodedPath = google.maps.geometry.encoding.decodePath(polygonEncoded);
@@ -106,8 +114,14 @@
 	        fillColor: 'yellow',
 	        fillOpacity: 0.4
 		    });
+		    currentShowingPolygon.push(polygon);
 		    google.maps.event.addListener(polygon, 'click', function (event) {
 		    	appendTags(locality.get('localityName'));
+		    	map.setZoom(13);
+		    	selectedLocality.localityId=locality.get('localityId')
+		    	selectedLocality.localityName=locality.get('localityName')
+		    	prepareBreadCrumb();
+		    	map.panTo(event.latLng);
 		    });
 		    google.maps.event.addListener(polygon, 'mouseover', function (event) {
 		    	polygon.setOptions({fillColor: "orange"});        	
@@ -124,7 +138,16 @@
 		function appendTags(value){
 	    $('.multiseelctUl').append('<li>'+value+'</li>');
 	  }
-		function loadZone(zoneData, index) {
+	 var selectedZone={
+
+	 };
+	 var selectedLocality={
+
+	 }
+
+	 var currentShowingPolygon=[];
+		function loadZone(zoneData, index) {			
+			currentShowingPolygon=zonePolygons;
       var zoneName=zoneData.get("zoneName");
       var polygonEncoded=zoneData.get('polygonEncoded');
       var decodedPath = google.maps.geometry.encoding.decodePath(polygonEncoded);
@@ -139,19 +162,49 @@
 	    });
 	    zonePolygons.push(zonePolygon);
 	    google.maps.event.addListener(zonePolygon, 'mouseover', function (event) {
-        infowindow.setContent("<a href='"+"' target='_blank'><b>"+zoneName+"</b></a>");
+	    	var zoneText=zoneData.get("zoneText");
+	    	var attributes=zoneData.get("attributes");
+	    	var pctg=attributes.sentiment+"%";
+	    	var cls='positiveSentiment'
+	    	if(attributes.sentiment<0){
+					cls='negativeSentiment'
+	    	}
+        infowindow.setContent("<div><a href='"+"' target='_blank'><b>"+zoneName+"</b></a><div class='"+cls+"'><b>"+pctg+"</b></div><div style='width:120px'>"+zoneText+"</div></div>");
         infowindow.setPosition(event.latLng);
         infowindow.open(map);
       });
       google.maps.event.addListener(zonePolygon, 'click', function (event) {
-      	zonePolygons.forEach(function(polygon){
-      		polygon.setMap(null);
-      	})
-      	infowindow.close();
-      	map.setZoom(11);
-      	loadLocalities(index);
+      	loadLocalitiesInZone(index, zoneName, event)
       });
 	    zonePolygon.setMap(map);
+    }
+    function loadLocalitiesInZone(index, zoneName, event){
+    	currentShowingPolygon.forEach(function(polygon){
+      		polygon.setMap(null);
+    	})
+    	infowindow.close();
+    	selectedZone.index=index;
+    	selectedZone.zoneName=zoneName;
+    	prepareBreadCrumb();
+    	map.setZoom(12);
+	    map.panTo(event.latLng);
+    	loadLocalities(index);
+    }
+    function zoneClick(object){    	
+    	selectedLocality={};
+    	prepareBreadCrumb();
+    	map.setZoom(12);
+    }
+    function prepareBreadCrumb(){    				
+    	var html="<a href='/''>Home</a>";
+    	if(selectedZone.index){
+    		html+="&nbsp;>>&nbsp;<a class='zoneActivator' onClick='zoneClick(this)' data-zone-index='"+selectedZone.index+"'>"+selectedZone.zoneName+"</a>"
+    	}
+    	if(selectedLocality.localityId){
+				html+="&nbsp;>>&nbsp;<a class='localityActivator' data-zone-index='"+selectedLocality.localityId+"'>"+selectedLocality.localityName+"</a>"
+    	}
+    	console.log(prepareBreadCrumb);
+    	$('.breadCrumbHolder').html(html);
     }
 		function initialize() {
 		  var mapProp = {
@@ -161,6 +214,7 @@
 		  };
 		  map=new google.maps.Map(document.getElementById("googleMap"),mapProp);
 		  Parse.initialize("3nP5Zdd4wy72HWQMfCl1OQcBv7iok8d5NPVRlYN5", "ZA9mcuwRZMa0yzJXvBQQ294rKu7vnjXed50JJRjU");
+		  
 		  var Zone = Parse.Object.extend("Zone");
       var query = new Parse.Query(Zone);
       query.find({
@@ -173,6 +227,7 @@
 		      	success: function(localityData){
 		      		localities=localityData;
 		      		initializeMap();
+		      		
 		      	},
         	});
         },
@@ -200,25 +255,27 @@
 					</div>
 				</div>
 				<div class="col-md-12 contentWrapper">
+				
+				<div class="breadCrumbHolder module">                
+          <a href="/">Home</a>
+        </div>
+        <br>
 					<div class="col-md-5 map">
 						<div  id="googleMap"></div>
 					</div>
 					<div class="col-md-7 search">
 						<h2>Find your dream property in Bangalore</h2>
-						<h5>All property listings for sale or rent in bangalore</h5>
+						<h5>All property listings for sale in bangalore</h5>
 						<div class="col-md-12 wrapSearch">
 							<div class="col-md-2 forsalerent">
-								<button class="btn btn-default">Sale</button>
-								<button class="btn btn-default">Rent</button>
+								<button class="btn btn-default">Sale</button>								
 							</div>
 							<div class="col-md-10 filter">
 								<ul>
-									<li>Homes</li>
-									<li>Commercial</li>
-									<li>land</li>
-									<li>other</li>
-									<li>new Bulls</li>
-									<li>student</li>
+									<li>Aparment</li>
+									<li>Independent House</li>
+									<li>Villa</li>
+									<li>Plots</li>
 								</ul>
 								<div class="multiselectTextBoxWrap">
 									<ul class="multiseelctUl">
